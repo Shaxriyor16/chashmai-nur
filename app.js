@@ -1,4 +1,3 @@
-// app.js — Render + local ready version
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const session = require('express-session');
@@ -7,28 +6,27 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_secret_change_me';
 
-// Paths
+// --- Paths ---
 const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const IMAGES_DIR = path.join(PUBLIC_DIR, 'images');
 const FOODS_FILE = path.join(ROOT, 'foods.json');
 const VIEWS_DIR = path.join(ROOT, 'views');
 
-// Ensure folders exist
+// --- Ensure folders exist ---
 if (!fs.existsSync(PUBLIC_DIR)) fs.mkdirSync(PUBLIC_DIR);
 if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR);
 if (!fs.existsSync(FOODS_FILE)) fs.writeFileSync(FOODS_FILE, '[]');
 
-// Middleware
+// --- Middleware ---
 app.use(express.static(PUBLIC_DIR));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(fileUpload({ limits: { fileSize: 5 * 1024 * 1024 } }));
+app.use(fileUpload({ limits: { fileSize: 5 * 1024 * 1024 } })); // 5MB
 
 app.use(session({
-  secret: SESSION_SECRET,
+  secret: 'dev_secret_change_me',
   resave: false,
   saveUninitialized: false,
   cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
@@ -37,11 +35,11 @@ app.use(session({
 app.set('views', VIEWS_DIR);
 app.set('view engine', 'ejs');
 
-// Admin credentials
-const ADMIN_FULL_PHONE = process.env.ADMIN_PHONE || '+998996479888';
+// --- Admin credentials ---
+const ADMIN_NUMBER = process.env.ADMIN_PHONE || '+998996479888';
 const ADMIN_PASS = process.env.ADMIN_PASS || '1234';
 
-// Helpers
+// --- Helpers ---
 function safeReadJSON(filePath) {
   try { return JSON.parse(fs.readFileSync(filePath, 'utf8') || '[]'); }
   catch (err) { console.error('JSON read error:', err); return []; }
@@ -58,23 +56,28 @@ function normalizePhoneInput(input) {
   return '';
 }
 
-// Routes
+// --- Routes ---
 app.get('/health', (req, res) => res.send('ok'));
-app.get('/', (req, res) => res.render('index', { foods: safeReadJSON(FOODS_FILE) }));
 
-// Login
+// Home
+app.get('/', (req, res) => {
+  res.render('index', { foods: safeReadJSON(FOODS_FILE) });
+});
+
+// Login page
 app.get('/login', (req, res) => {
-  if (req.session && req.session.isAdmin) return res.redirect('/admin');
+  if (req.session?.isAdmin) return res.redirect('/admin');
   const loginCode = Math.floor(1000 + Math.random() * 9000).toString();
   req.session.loginCode = loginCode;
   res.render('login', { error: null, loginCode });
 });
 
+// Login POST
 app.post('/login', (req, res) => {
   const { username, password, code } = req.body;
   const normalized = normalizePhoneInput(username);
 
-  if (normalized === ADMIN_FULL_PHONE && password === ADMIN_PASS && code === req.session.loginCode) {
+  if (normalized === ADMIN_NUMBER && password === ADMIN_PASS && code === req.session.loginCode) {
     req.session.isAdmin = true;
     req.session.adminUser = normalized;
     return res.redirect('/admin');
@@ -102,7 +105,9 @@ app.post('/add-food', (req, res) => {
 
   const { name, description, price, category } = req.body;
   const file = req.files?.image;
-  if (!name || !description || !price || !category) return res.status(400).send('Barcha maydonlarni to‘ldiring');
+
+  if (!name || !description || !price || !category) 
+    return res.status(400).send('Barcha maydonlarni to‘ldiring');
 
   let imageUrl = null;
   if (file) {
@@ -124,7 +129,7 @@ app.get('/_debug/session', (req, res) => {
   res.json({ session: req.session });
 });
 
-// Start server
+// --- Start server ---
 app.listen(PORT, () => console.log(`Server running on port ${PORT}, NODE_ENV=${process.env.NODE_ENV || 'dev'}`));
 
 
