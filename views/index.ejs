@@ -5,7 +5,7 @@
 <title>Chashmai Nur — Menyu</title>
 <style>
 body {margin:0;font-family:Arial,sans-serif;display:flex;}
-.sidebar {width:220px;background:#111;color:#fff;min-height:100vh;padding:20px;transition:0.3s;}
+.sidebar {width:220px;background:#111;color:#fff;min-height:100vh;padding:20px;}
 .sidebar .logo{text-align:center;margin-bottom:20px;}
 .sidebar .logo img{width:80px;border-radius:50%;}
 .sidebar h2{font-size:18px;margin-top:10px;color:gold;}
@@ -16,8 +16,8 @@ header h1{margin:0;color:#222;}
 .contact-info{font-size:14px;color:#fff;background:#111;display:inline-block;padding:8px 12px;border-radius:8px;}
 .contact-info a{color:#fff;text-decoration:none;font-weight:bold;}
 .contact-info a:hover{text-decoration:underline;}
-#menuGrid{display:flex;flex-wrap:wrap;gap:15px;margin-top:20px;}
-.food-card{position:relative;background:#f5f5f5;border-radius:12px;padding:10px;width:200px;box-shadow:0 2px 6px rgba(0,0,0,0.2);transition:0.3s;}
+.category-block{display:flex;flex-wrap:wrap;gap:15px;margin-top:10px;margin-bottom:30px;}
+.food-card{position:relative;background:#f5f5f5;border-radius:12px;padding:10px;width:200px;box-shadow:0 2px 6px rgba(0,0,0,0.2);}
 .food-card img{width:100%;border-radius:10px;}
 .food-card h3{margin:8px 0 4px 0;font-size:16px;color:#111;}
 .food-card p{margin:0;font-size:14px;color:#333;}
@@ -34,14 +34,13 @@ header h1{margin:0;color:#222;}
     <h2>Chashmai Nur</h2>
   </div>
   <nav class="menu-nav">
-    <button data-cat="all">📋 Barchasi</button>
-    <button data-cat="salat">🥗 Salatlar</button>
-    <button data-cat="asosiy">🍲 Asosiy taomlar</button>
-    <button data-cat="gosht">🍖 Go‘shtli taomlar</button>
-    <button data-cat="baliq">🐟 Baliq</button>
-    <button data-cat="shashlik">🍢 Shashliklar</button>
-    <button data-cat="desert">🍰 Desertlar</button>
-    <button data-cat="ichimlik">☕ Ichimliklar</button>
+    <button onclick="scrollToCat('salat')">🥗 Salatlar</button>
+    <button onclick="scrollToCat('asosiy')">🍲 Asosiy taomlar</button>
+    <button onclick="scrollToCat('gosht')">🍖 Go‘shtli taomlar</button>
+    <button onclick="scrollToCat('baliq')">🐟 Baliq</button>
+    <button onclick="scrollToCat('shashlik')">🍢 Shashliklar</button>
+    <button onclick="scrollToCat('desert')">🍰 Desertlar</button>
+    <button onclick="scrollToCat('ichimlik')">☕ Ichimliklar</button>
   </nav>
 </aside>
 <main class="content">
@@ -49,41 +48,45 @@ header h1{margin:0;color:#222;}
   <h1>Menyu</h1>
   <div class="contact-info">📞 <a href="tel:+998974128074">+998 97 412 80 74</a></div>
 </header>
-<div id="menuGrid">
-<% foods.forEach(food => { %>
-  <div class="food-card" data-cat="<%= food.category %>">
-    <% if(food.new){ %>
-      <div class="new-label">NEW</div>
-    <% } %>
-    <img src="<%= food.image %>" alt="<%= food.name %>">
-    <h3><%= food.name %></h3>
-    <p><%= food.description %> — <%= food.price %> so'm</p>
-  </div>
-<% }); %>
-</div>
+
+<% const categories = {
+   salat: "🥗 Salatlar",
+   asosiy: "🍲 Asosiy taomlar",
+   gosht: "🍖 Go‘shtli taomlar",
+   baliq: "🐟 Baliq",
+   shashlik: "🍢 Shashliklar",
+   desert: "🍰 Desertlar",
+   ichimlik: "☕ Ichimliklar"
+}; %>
+
+<% for(const cat in categories){ %>
+  <section id="<%= cat %>">
+    <h2><%= categories[cat] %></h2>
+    <div class="category-block">
+      <% foods.filter(f => f.category === cat).forEach(food => { %>
+        <div class="food-card">
+          <% if(food.new){ %>
+            <div class="new-label">NEW</div>
+          <% } %>
+          <img src="<%= food.image %>" alt="<%= food.name %>">
+          <h3><%= food.name %></h3>
+          <p><%= food.description %> — <%= food.price %> so'm</p>
+        </div>
+      <% }) %>
+    </div>
+  </section>
+<% } %>
+
 </main>
 <script>
-// Hamburger menu
 const hamburger = document.getElementById("hamburger");
 const sidebar = document.getElementById("sidebar");
 hamburger.addEventListener("click",()=>{sidebar.classList.toggle("open");});
 
-// Kategoriya filtrlash
-const buttons = document.querySelectorAll(".menu-nav button");
-const cards = document.querySelectorAll(".food-card");
-
-buttons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const cat = btn.getAttribute("data-cat");
-    cards.forEach(card => {
-      if (cat === "all" || card.getAttribute("data-cat") === cat) {
-        card.style.display = "block";
-      } else {
-        card.style.display = "none";
-      }
-    });
-  });
-});
+function scrollToCat(catId){
+  document.getElementById(catId).scrollIntoView({behavior:"smooth"});
+  if(window.innerWidth <= 768){ sidebar.classList.remove("open"); }
+}
 </script>
 </body>
 </html>
