@@ -1,30 +1,15 @@
 {
   "name": "chashmai-nur",
   "version": "1.0.0",
-  "description": "Chashmai Nur project with Express, EJS, file upload, and admin panel",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "node app.js"
   },
-  "keywords": [
-    "express",
-    "ejs",
-    "menu",
-    "admin",
-    "chashmai-nur"
-  ],
-  "author": "Shaxriyor16",
-  "license": "ISC",
   "dependencies": {
-    "body-parser": "^1.20.2",
-    "ejs": "^3.1.10",
     "express": "^4.19.2",
-    "express-fileupload": "^1.4.3",
-    "express-session": "^1.17.3"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.0"
+    "express-session": "^1.17.3",
+    "express-fileupload": "^1.4.0",
+    "ejs": "^3.1.9"
   }
 }
 
