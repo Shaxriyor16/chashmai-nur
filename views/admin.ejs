@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <title>Admin Panel</title>
+<link rel="stylesheet" href="/style.css">
 <style>
+/* Sizning oldingi CSS saqlanadi */
 body{background:#111;color:#fff;font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;position:relative;}
 .logo{position:absolute;top:20px;left:20px;width:60px;height:60px;object-fit:contain;border-radius:10px;border:2px solid gold;}
 .admin-box{background:#1e1e1e;padding:30px;border-radius:15px;width:420px;box-shadow:0 0 20px rgba(255,215,0,0.3);}
@@ -19,13 +21,22 @@ button:hover{background:#ffcc00;}
 .logout{text-align:right;margin-bottom:15px;}
 .logout a{color:#ff5555;text-decoration:none;font-weight:bold;}
 .logout a:hover{text-decoration:underline;}
+.food-list{margin-top:20px;}
+.food-item{border:1px solid gold;padding:10px;border-radius:10px;margin-bottom:10px;display:flex;gap:10px;align-items:center;}
+.food-item img{width:60px;height:60px;object-fit:cover;border-radius:8px;}
+.food-details{flex:1;}
+.food-details h4{margin:0 0 5px 0;color:#ffd700;}
+.food-details p{margin:0;color:#ddd;font-size:13px;}
 </style>
 </head>
 <body>
 <img src="/images/Chashmai-nur.jpg" alt="Logotip" class="logo">
+
 <div class="admin-box">
   <div class="logout"><a href="/logout">🚪 Chiqish</a></div>
   <h1>👨‍🍳 Admin Panel</h1>
+
+  <!-- Ovqat qo‘shish formasi -->
   <form action="/add-food" method="POST" enctype="multipart/form-data">
     <input type="text" name="name" placeholder="🍴 Ovqat nomi" required>
     <textarea name="description" placeholder="📋 Tavsif" required></textarea>
@@ -42,28 +53,54 @@ button:hover{background:#ffcc00;}
       <option value="ichimlik">☕ Ichimliklar</option>
     </select>
 
-    <input type="file" name="image" id="imageInput" accept="image/*" required>
+    <input type="file" name="image" id="imageInput" accept="image/*">
     <div class="preview"><img id="previewImage" alt="Tanlangan rasm"></div>
 
     <button type="submit">➕ Ovqatni qo‘shish</button>
   </form>
+
+  <!-- Qo‘shilgan ovqatlar ro‘yxati -->
+  <div class="food-list">
+    <% if (foods && foods.length > 0) { %>
+      <% foods.slice().reverse().forEach(food => { %>
+        <div class="food-item">
+          <% if (food.image) { %>
+            <img src="<%= food.image %>" alt="<%= food.name %>">
+          <% } else { %>
+            <img src="/images/Chashmai-nur.jpg" alt="No Image">
+          <% } %>
+          <div class="food-details">
+            <h4><%= food.name %> - <%= food.price %> so'm</h4>
+            <p>📂 <%= food.category %></p>
+            <p><%= food.description %></p>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <p style="color:#ddd;text-align:center;margin-top:15px;">Hozircha ovqat qo‘shilmagan.</p>
+    <% } %>
+  </div>
+
 </div>
+
 <script>
-const imageInput=document.getElementById("imageInput");
-const previewImage=document.getElementById("previewImage");
-imageInput.addEventListener("change",()=>{
-  const file=imageInput.files[0];
-  if(file){
-    const reader=new FileReader();
-    reader.onload=e=>{
-      previewImage.src=e.target.result;
-      previewImage.style.display="block";
+const imageInput = document.getElementById("imageInput");
+const previewImage = document.getElementById("previewImage");
+
+imageInput.addEventListener("change", () => {
+  const file = imageInput.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      previewImage.src = e.target.result;
+      previewImage.style.display = "block";
     };
     reader.readAsDataURL(file);
-  }else{
-    previewImage.style.display="none";
+  } else {
+    previewImage.style.display = "none";
   }
 });
 </script>
 </body>
 </html>
+
