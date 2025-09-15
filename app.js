@@ -1,4 +1,4 @@
-// app.js — robust version for Render + local with improved login handling
+// app.js — Render + local ready version
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const session = require('express-session');
@@ -25,16 +25,13 @@ if (!fs.existsSync(FOODS_FILE)) fs.writeFileSync(FOODS_FILE, '[]');
 app.use(express.static(PUBLIC_DIR));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(fileUpload({ limits: { fileSize: 5 * 1024 * 1024 } })); // 5MB
+app.use(fileUpload({ limits: { fileSize: 5 * 1024 * 1024 } }));
 
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: {
-    secure: false,
-    maxAge: 24 * 60 * 60 * 1000
-  }
+  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
 }));
 
 app.set('views', VIEWS_DIR);
@@ -46,18 +43,10 @@ const ADMIN_PASS = process.env.ADMIN_PASS || '1234';
 
 // Helpers
 function safeReadJSON(filePath) {
-  try {
-    const raw = fs.readFileSync(filePath, 'utf8');
-    if (!raw) return [];
-    return JSON.parse(raw);
-  } catch (err) {
-    console.error('JSON read error:', err);
-    return [];
-  }
+  try { return JSON.parse(fs.readFileSync(filePath, 'utf8') || '[]'); }
+  catch (err) { console.error('JSON read error:', err); return []; }
 }
-function safeWriteJSON(filePath, data) {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-}
+function safeWriteJSON(filePath, data) { fs.writeFileSync(filePath, JSON.stringify(data, null, 2)); }
 function onlyDigits(s) { return (s||'').toString().replace(/\D/g, ''); }
 function normalizePhoneInput(input) {
   if (!input) return '';
@@ -71,15 +60,11 @@ function normalizePhoneInput(input) {
 
 // Routes
 app.get('/health', (req, res) => res.send('ok'));
-app.get('/', (req, res) => {
-  const foods = safeReadJSON(FOODS_FILE);
-  res.render('index', { foods });
-});
+app.get('/', (req, res) => res.render('index', { foods: safeReadJSON(FOODS_FILE) }));
 
 // Login
 app.get('/login', (req, res) => {
   if (req.session && req.session.isAdmin) return res.redirect('/admin');
-  // Generate 4-digit code for “Dabdalang” check
   const loginCode = Math.floor(1000 + Math.random() * 9000).toString();
   req.session.loginCode = loginCode;
   res.render('login', { error: null, loginCode });
@@ -88,15 +73,15 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
   const { username, password, code } = req.body;
   const normalized = normalizePhoneInput(username);
+
   if (normalized === ADMIN_FULL_PHONE && password === ADMIN_PASS && code === req.session.loginCode) {
     req.session.isAdmin = true;
     req.session.adminUser = normalized;
     return res.redirect('/admin');
   } else {
-    // Wrong login
     const newCode = Math.floor(1000 + Math.random() * 9000).toString();
     req.session.loginCode = newCode;
-    return res.render('login', { error: '🚨 Dabdalang! Login yoki parol noto‘g‘ri!', loginCode: newCode });
+    return res.render('login', { error: '🚨 Login yoki parol noto‘g‘ri!', loginCode: newCode });
   }
 });
 
@@ -107,25 +92,23 @@ app.get('/logout', (req, res) => {
 
 // Admin panel
 app.get('/admin', (req, res) => {
-  if (!req.session || !req.session.isAdmin) return res.redirect('/login');
-  const foods = safeReadJSON(FOODS_FILE);
-  res.render('admin', { foods, adminUser: req.session.adminUser });
+  if (!req.session?.isAdmin) return res.redirect('/login');
+  res.render('admin', { foods: safeReadJSON(FOODS_FILE), adminUser: req.session.adminUser });
 });
 
 // Add food
 app.post('/add-food', (req, res) => {
-  if (!req.session || !req.session.isAdmin) return res.status(401).send('Unauthorized');
+  if (!req.session?.isAdmin) return res.status(401).send('Unauthorized');
 
   const { name, description, price, category } = req.body;
   const file = req.files?.image;
-
   if (!name || !description || !price || !category) return res.status(400).send('Barcha maydonlarni to‘ldiring');
 
   let imageUrl = null;
   if (file) {
     const fileName = Date.now() + path.extname(file.name);
     const savePath = path.join(IMAGES_DIR, fileName);
-    try { file.mv(savePath); imageUrl = `/images/${fileName}`; }
+    try { file.mv(savePath); imageUrl = `/images/${fileName}`; } 
     catch (err) { console.error('Image save error', err); return res.status(500).send('Rasm saqlashda xatolik'); }
   }
 
@@ -135,22 +118,13 @@ app.post('/add-food', (req, res) => {
   res.redirect('/admin');
 });
 
-// Debug: session
+// Debug session
 app.get('/_debug/session', (req, res) => {
   if (process.env.DEBUG_SESSIONS !== 'true') return res.status(403).send('Forbidden');
   res.json({ session: req.session });
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`NODE_ENV=${process.env.NODE_ENV || 'dev'}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}, NODE_ENV=${process.env.NODE_ENV || 'dev'}`));
 
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`NODE_ENV=${process.env.NODE_ENV || 'dev'}`);
-});
 
