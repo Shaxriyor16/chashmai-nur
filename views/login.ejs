@@ -1,27 +1,57 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Login</title>
-  <style>
-    body{background:#111;color:#fff;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;font-family:Arial;}
-    .login-box{background:#1e1e1e;padding:30px;border-radius:15px;width:350px;text-align:center;box-shadow:0 0 20px rgba(255,215,0,0.3);}
-    h1{color:gold;margin-bottom:20px;}
-    input,button{width:100%;padding:12px;margin:10px 0;border:none;border-radius:8px;}
-    input{background:#2a2a2a;color:#fff;}
-    input:focus{outline:2px solid gold;}
-    button{background:gold;color:#111;font-weight:bold;cursor:pointer;}
-    button:hover{background:#ffcc00;}
-  </style>
+<meta charset="UTF-8">
+<title>Admin Login</title>
+<style>
+body{background:#111;color:#fff;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;font-family:Arial;}
+.login-box{background:#1e1e1e;padding:30px;border-radius:15px;width:360px;text-align:center;box-shadow:0 0 20px rgba(0,0,0,0.5);}
+h1{color:gold;margin-bottom:15px;}
+input,button{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:0;font-size:14px;}
+input{background:#2a2a2a;color:#fff;}
+button{background:gold;color:#111;font-weight:bold;cursor:pointer;}
+.small{font-size:13px;color:#ddd;margin-top:6px;}
+.code-box{margin-top:6px;background:#222;padding:10px;border-radius:8px;font-weight:bold;color:#fff;letter-spacing:2px;}
+.error{color:#ff9999;margin-bottom:8px;}
+</style>
 </head>
 <body>
-  <div class="login-box">
-    <h1>🔑 Admin Login</h1>
-    <form method="POST" action="/login">
-      <input type="text" name="phone" placeholder="Telefon: 996479888" required>
-      <input type="password" name="password" placeholder="Parol: 1234" required>
-      <button type="submit">Kirish</button>
-    </form>
-  </div>
+<div class="login-box">
+<h1>🔐 Admin Login</h1>
+
+<div class="small">Quyidagi raqamni parol ostidagi qatoriga yozing:</div>
+<div class="code-box" id="loginCode"></div>
+<div class="error" id="errorMsg"></div>
+
+<input type="text" id="username" placeholder="Nomer" required>
+<input type="password" id="password" placeholder="Parol" required>
+<input type="text" id="code" placeholder="Tasdiqlash kodini kiriting" required>
+<button onclick="login()">Kirish</button>
+</div>
+
+<script>
+// Kutilgan ma’lumotlar
+const ADMIN_NUMBER = "9988776655";
+const ADMIN_PASSWORD = "1234";
+let loginCode = Math.floor(1000 + Math.random() * 9000).toString();
+document.getElementById("loginCode").innerText = loginCode;
+
+function login() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    const code = document.getElementById("code").value;
+
+    if(username === ADMIN_NUMBER && password === ADMIN_PASSWORD && code === loginCode) {
+        // To'g'ri bo'lsa admin.html ga o‘tkazish
+        window.location.href = "admin.html";
+    } else {
+        document.getElementById("errorMsg").innerText = "Login yoki parol noto‘g‘ri!";
+        // yangi tasdiqlash kodi yaratish
+        loginCode = Math.floor(1000 + Math.random() * 9000).toString();
+        document.getElementById("loginCode").innerText = loginCode;
+    }
+}
+</script>
 </body>
 </html>
+
