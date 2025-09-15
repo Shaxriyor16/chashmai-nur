@@ -37,7 +37,7 @@ app.set('view engine', 'ejs');
 
 // --- Admin credentials ---
 const ADMIN_NUMBER = process.env.ADMIN_PHONE || '+998996479888';
-const ADMIN_PASS = process.env.ADMIN_PASS || '1234';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'Fi132607';
 
 // --- Helpers ---
 function safeReadJSON(filePath) {
