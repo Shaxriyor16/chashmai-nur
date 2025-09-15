@@ -1,4 +1,4 @@
-// app.js — robust version for Render + local
+// app.js — robust version for Render + local with improved login handling
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const session = require('express-session');
@@ -25,16 +25,14 @@ if (!fs.existsSync(FOODS_FILE)) fs.writeFileSync(FOODS_FILE, '[]');
 app.use(express.static(PUBLIC_DIR));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(fileUpload({
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
-}));
+app.use(fileUpload({ limits: { fileSize: 5 * 1024 * 1024 } })); // 5MB
 
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Render gives HTTPS; but keep false for local. If you use HTTPS, set true.
+    secure: false,
     maxAge: 24 * 60 * 60 * 1000
   }
 }));
@@ -42,8 +40,8 @@ app.use(session({
 app.set('views', VIEWS_DIR);
 app.set('view engine', 'ejs');
 
-// Admin credentials (use env in production)
-const ADMIN_FULL_PHONE = process.env.ADMIN_PHONE || '+998996479888'; // your +998...
+// Admin credentials
+const ADMIN_FULL_PHONE = process.env.ADMIN_PHONE || '+998996479888';
 const ADMIN_PASS = process.env.ADMIN_PASS || '1234';
 
 // Helpers
@@ -72,32 +70,34 @@ function normalizePhoneInput(input) {
 }
 
 // Routes
-
-// Health
 app.get('/health', (req, res) => res.send('ok'));
-
-// Index: show menu
 app.get('/', (req, res) => {
   const foods = safeReadJSON(FOODS_FILE);
   res.render('index', { foods });
 });
 
-// Login page (GET)
+// Login
 app.get('/login', (req, res) => {
   if (req.session && req.session.isAdmin) return res.redirect('/admin');
-  res.render('login', { error: null });
+  // Generate 4-digit code for “Dabdalang” check
+  const loginCode = Math.floor(1000 + Math.random() * 9000).toString();
+  req.session.loginCode = loginCode;
+  res.render('login', { error: null, loginCode });
 });
 
-// Login (POST)
 app.post('/login', (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, code } = req.body;
   const normalized = normalizePhoneInput(username);
-  if (normalized === ADMIN_FULL_PHONE && password === ADMIN_PASS) {
+  if (normalized === ADMIN_FULL_PHONE && password === ADMIN_PASS && code === req.session.loginCode) {
     req.session.isAdmin = true;
     req.session.adminUser = normalized;
     return res.redirect('/admin');
+  } else {
+    // Wrong login
+    const newCode = Math.floor(1000 + Math.random() * 9000).toString();
+    req.session.loginCode = newCode;
+    return res.render('login', { error: '🚨 Dabdalang! Login yoki parol noto‘g‘ri!', loginCode: newCode });
   }
-  res.render('login', { error: 'Login yoki parol xato' });
 });
 
 // Logout
@@ -105,58 +105,48 @@ app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login'));
 });
 
-// Admin (protected)
+// Admin panel
 app.get('/admin', (req, res) => {
   if (!req.session || !req.session.isAdmin) return res.redirect('/login');
   const foods = safeReadJSON(FOODS_FILE);
   res.render('admin', { foods, adminUser: req.session.adminUser });
 });
 
-// Add food (protected)
+// Add food
 app.post('/add-food', (req, res) => {
   if (!req.session || !req.session.isAdmin) return res.status(401).send('Unauthorized');
 
   const { name, description, price, category } = req.body;
   const file = req.files?.image;
 
-  if (!name || !description || !price || !category) {
-    return res.status(400).send('Barcha maydonlarni to‘ldiring');
-  }
+  if (!name || !description || !price || !category) return res.status(400).send('Barcha maydonlarni to‘ldiring');
 
   let imageUrl = null;
   if (file) {
     const fileName = Date.now() + path.extname(file.name);
     const savePath = path.join(IMAGES_DIR, fileName);
-    try {
-      file.mv(savePath);
-      imageUrl = `/images/${fileName}`;
-    } catch (err) {
-      console.error('Image save error', err);
-      return res.status(500).send('Rasm saqlashda xatolik');
-    }
+    try { file.mv(savePath); imageUrl = `/images/${fileName}`; }
+    catch (err) { console.error('Image save error', err); return res.status(500).send('Rasm saqlashda xatolik'); }
   }
 
   const foods = safeReadJSON(FOODS_FILE);
-  foods.push({
-    id: Date.now(),
-    name,
-    description,
-    price,
-    category,
-    image: imageUrl,
-    new: true
-  });
+  foods.push({ id: Date.now(), name, description, price, category, image: imageUrl, new: true });
   safeWriteJSON(FOODS_FILE, foods);
   res.redirect('/admin');
 });
 
-// Debug helper: show session (only if local or admin)
+// Debug: session
 app.get('/_debug/session', (req, res) => {
-  if (process.env.DEBUG_SESSIONS !== 'true') {
-    return res.status(403).send('Forbidden');
-  }
+  if (process.env.DEBUG_SESSIONS !== 'true') return res.status(403).send('Forbidden');
   res.json({ session: req.session });
 });
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`NODE_ENV=${process.env.NODE_ENV || 'dev'}`);
+});
+
 
 // Start server
 app.listen(PORT, () => {
