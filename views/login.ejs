@@ -30,7 +30,7 @@ button{background:gold;color:#111;font-weight:bold;cursor:pointer;}
 </div>
 
 <script>
-// Kutilgan ma’lumotlar
+// Kutilgan admin ma’lumotlari
 const ADMIN_NUMBER = "9988776655";
 const ADMIN_PASSWORD = "1234";
 let loginCode = Math.floor(1000 + Math.random() * 9000).toString();
@@ -42,7 +42,7 @@ function login() {
     const code = document.getElementById("code").value;
 
     if(username === ADMIN_NUMBER && password === ADMIN_PASSWORD && code === loginCode) {
-        // To'g'ri bo'lsa admin.html ga o‘tkazish
+        // To'g'ri bo'lsa admin panelga o‘tkazish
         window.location.href = "admin.html";
     } else {
         document.getElementById("errorMsg").innerText = "Login yoki parol noto‘g‘ri!";
