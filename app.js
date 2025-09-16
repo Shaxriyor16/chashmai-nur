@@ -23,12 +23,12 @@ if (!fs.existsSync(FOODS_FILE)) fs.writeFileSync(FOODS_FILE, '[]');
 app.use(express.static(PUBLIC_DIR));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(fileUpload({ limits: { fileSize: 5 * 1024 * 1024 } })); // 5MB
+app.use(fileUpload({ limits: { fileSize: 5 * 1024 * 1024 } }));
 
 app.use(session({
   secret: 'dev_secret_change_me',
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true,
   cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
 }));
 
@@ -57,12 +57,7 @@ function normalizePhoneInput(input) {
 }
 
 // --- Routes ---
-app.get('/health', (req, res) => res.send('ok'));
-
-// Home
-app.get('/', (req, res) => {
-  res.render('index', { foods: safeReadJSON(FOODS_FILE) });
-});
+app.get('/', (req, res) => res.redirect('/login'));
 
 // Login page
 app.get('/login', (req, res) => {
@@ -106,14 +101,14 @@ app.post('/add-food', (req, res) => {
   const { name, description, price, category } = req.body;
   const file = req.files?.image;
 
-  if (!name || !description || !price || !category) 
+  if (!name || !description || !price || !category)
     return res.status(400).send('Barcha maydonlarni to‘ldiring');
 
   let imageUrl = null;
   if (file) {
     const fileName = Date.now() + path.extname(file.name);
     const savePath = path.join(IMAGES_DIR, fileName);
-    try { file.mv(savePath); imageUrl = `/images/${fileName}`; } 
+    try { file.mv(savePath); imageUrl = `/images/${fileName}`; }
     catch (err) { console.error('Image save error', err); return res.status(500).send('Rasm saqlashda xatolik'); }
   }
 
@@ -123,13 +118,5 @@ app.post('/add-food', (req, res) => {
   res.redirect('/admin');
 });
 
-// Debug session
-app.get('/_debug/session', (req, res) => {
-  if (process.env.DEBUG_SESSIONS !== 'true') return res.status(403).send('Forbidden');
-  res.json({ session: req.session });
-});
-
 // --- Start server ---
 app.listen(PORT, () => console.log(`Server running on port ${PORT}, NODE_ENV=${process.env.NODE_ENV || 'dev'}`));
-
-
