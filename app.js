@@ -57,11 +57,14 @@ function normalizePhoneInput(input) {
 }
 
 // --- Routes ---
-app.get('/', (req, res) => res.redirect('/login'));
 
-// Login page
+// Home page (for everyone)
+app.get('/', (req, res) => {
+  res.render('index', { foods: safeReadJSON(FOODS_FILE) });
+});
+
+// Login page (always open, session cookie mavjud bo‘lsa ham)
 app.get('/login', (req, res) => {
-  if (req.session?.isAdmin) return res.redirect('/admin');
   const loginCode = Math.floor(1000 + Math.random() * 9000).toString();
   req.session.loginCode = loginCode;
   res.render('login', { error: null, loginCode });
@@ -88,13 +91,13 @@ app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login'));
 });
 
-// Admin panel
+// Admin panel (faqat admin uchun)
 app.get('/admin', (req, res) => {
   if (!req.session?.isAdmin) return res.redirect('/login');
   res.render('admin', { foods: safeReadJSON(FOODS_FILE), adminUser: req.session.adminUser });
 });
 
-// Add food
+// Add food (admin only)
 app.post('/add-food', (req, res) => {
   if (!req.session?.isAdmin) return res.status(401).send('Unauthorized');
 
