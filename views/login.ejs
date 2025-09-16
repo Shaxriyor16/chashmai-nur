@@ -11,17 +11,24 @@ input,button{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:0;fon
 input{background:#2a2a2a;color:#fff;}
 button{background:gold;color:#111;font-weight:bold;cursor:pointer;}
 .error{color:#ff5555;margin-bottom:8px;}
+.code-box{background:#222;color:#fff;padding:8px;border-radius:8px;margin-bottom:10px;font-weight:bold;}
 </style>
 </head>
 <body>
 <div class="login-box">
 <h1>🔐 Admin Login</h1>
+
 <% if (error) { %>
   <div class="error"><%= error %></div>
 <% } %>
+
+<!-- Login kodi ko'rsatiladi -->
+<div class="code-box">Login kodi: <%= loginCode %></div>
+
 <form method="POST" action="/login">
-  <input type="text" name="username" placeholder="Nomer" required>
+  <input type="text" name="username" placeholder="Telefon raqam" required>
   <input type="password" name="password" placeholder="Parol" required>
+  <input type="text" name="code" placeholder="Login kodini kiriting" required>
   <button type="submit">Kirish</button>
 </form>
 </div>
